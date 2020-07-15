@@ -13,8 +13,6 @@ import android.widget.ProgressBar;
 
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import static android.content.Context.MODE_PRIVATE;
-
 class WebClient extends WebViewClient{
     private ProgressBar progressBar;
     private SwipeRefreshLayout swipe;
@@ -35,14 +33,12 @@ class WebClient extends WebViewClient{
     public void onPageStarted(WebView view, String url, Bitmap favicon) {
         super.onPageStarted(view, url, favicon);
         progressBar.setVisibility(View.VISIBLE);
-        progressBar.setProgress(5);
     }
 
     @Override
     public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);
         progressBar.setVisibility(View.GONE);
-        progressBar.setProgress(100);
         swipe.setRefreshing(false);
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setCookie(url, cookies);

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.KeyEvent;
+import android.view.Window;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
 import android.webkit.WebChromeClient;
@@ -28,7 +29,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        getWindow().requestFeature(Window.FEATURE_PROGRESS);
         setContentView(R.layout.activity_main);
+        getWindow().setFeatureInt( Window.FEATURE_PROGRESS, Window.PROGRESS_VISIBILITY_ON);
+
         web = findViewById(R.id.web_view);
         bar = findViewById(R.id.progressBar2);
         swipe = findViewById(R.id.swipe);
@@ -67,7 +71,11 @@ public class MainActivity extends AppCompatActivity {
 
         web.setWebChromeClient(new WebChromeClient() {
             public void onProgressChanged(WebView view, int progress) {
+                setTitle("Loading...");
                 bar.setProgress(progress);
+
+                if (progress == 100)
+                    setTitle(R.string.app_name);
             }
         });
 
