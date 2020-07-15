@@ -1,8 +1,11 @@
 package com.example.webviewodoo;
 
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.net.http.SslError;
+import android.util.Log;
 import android.view.View;
+import android.webkit.CookieManager;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -13,10 +16,17 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 class WebClient extends WebViewClient{
     private ProgressBar progressBar;
     private SwipeRefreshLayout swipe;
+    private SharedPreferences shared;
+    private SharedPreferences.Editor editor;
+    private String cookies;
+    String session;
+    String loadUrl;
 
-    public WebClient(ProgressBar bar, SwipeRefreshLayout swipe) {
+    public WebClient(ProgressBar bar, SwipeRefreshLayout swipe, SharedPreferences shared, SharedPreferences.Editor editor) {
         this.progressBar = bar;
         this.swipe = swipe;
+        this.shared = shared;
+        this.editor = editor;
     }
 
     @Override
@@ -30,10 +40,16 @@ class WebClient extends WebViewClient{
         super.onPageFinished(view, url);
         progressBar.setVisibility(View.GONE);
         swipe.setRefreshing(false);
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.setCookie(url, cookies);
+
     }
 
     @Override
     public void onLoadResource(WebView view, String url) {
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookies = cookieManager.getCookie(url);
+        Log.d("ONloadResource","cookie is " + cookies);
         super.onLoadResource(view, url);
     }
 
