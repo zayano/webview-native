@@ -13,7 +13,7 @@ import android.widget.ProgressBar;
 
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-class WebClient extends WebViewClient{
+class MyWebClient extends WebViewClient{
     private ProgressBar progressBar;
     private SwipeRefreshLayout swipe;
     private SharedPreferences shared;
@@ -22,7 +22,7 @@ class WebClient extends WebViewClient{
     String session;
     String loadUrl;
 
-    public WebClient(ProgressBar bar, SwipeRefreshLayout swipe, SharedPreferences shared, SharedPreferences.Editor editor) {
+    public MyWebClient(ProgressBar bar, SwipeRefreshLayout swipe, SharedPreferences shared, SharedPreferences.Editor editor) {
         this.progressBar = bar;
         this.swipe = swipe;
         this.shared = shared;

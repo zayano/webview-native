@@ -4,7 +4,11 @@ import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.Window;
+import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
 import android.webkit.WebChromeClient;
@@ -21,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
     ProgressBar bar;
     SharedPreferences shared;
     SharedPreferences.Editor editor;
+    ViewTreeObserver.OnScrollChangedListener mOnScrollChangedListener;
 
     SwipeRefreshLayout swipe;
 
@@ -32,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
         getWindow().requestFeature(Window.FEATURE_PROGRESS);
         setContentView(R.layout.activity_main);
         getWindow().setFeatureInt( Window.FEATURE_PROGRESS, Window.PROGRESS_VISIBILITY_ON);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
         web = findViewById(R.id.web_view);
         bar = findViewById(R.id.progressBar2);
@@ -55,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
         cookieManager.setAcceptCookie(true);
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
+    @SuppressLint({"SetJavaScriptEnabled", "ClickableViewAccessibility"})
     public void loadWeb(){
         WebSettings webSettings = web.getSettings();
         web.loadUrl("http://172.17.20.233:8069/");
@@ -67,7 +73,29 @@ public class MainActivity extends AppCompatActivity {
         webSettings.setSaveFormData(true);
         webSettings.setSavePassword(true);
         webSettings.setAppCacheEnabled(true);
+        webSettings.setAllowFileAccess(true);
+        webSettings.setAllowContentAccess(true);
+        webSettings.setSavePassword(true);
+        webSettings.setSaveFormData(true);
+        webSettings.setNeedInitialFocus(true);
+        webSettings.setLoadsImagesAutomatically(true);
+        webSettings.setLoadWithOverviewMode(true);
         webSettings.getCacheMode();
+        web.requestFocus(View.FOCUS_DOWN);
+        web.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch (motionEvent.getAction()){
+                    case MotionEvent.ACTION_DOWN:
+                    case MotionEvent.ACTION_UP:
+                        if (!view.hasFocus()){
+                            view.requestFocus();
+                        }
+                        break;
+                }
+                return false;
+            }
+        });
 
         web.setWebChromeClient(new WebChromeClient() {
             public void onProgressChanged(WebView view, int progress) {
@@ -79,8 +107,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        web.setWebViewClient(new WebClient(bar, swipe, shared, editor));
-
+        web.setWebViewClient(new MyWebClient(bar, swipe, shared, editor));
         swipe.setRefreshing(true);
     }
 
@@ -94,4 +121,25 @@ public class MainActivity extends AppCompatActivity {
         return super.onKeyDown(keyCode, event);
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        swipe.getViewTreeObserver().addOnScrollChangedListener(mOnScrollChangedListener =
+                new ViewTreeObserver.OnScrollChangedListener() {
+                    @Override
+                    public void onScrollChanged() {
+                        if (web.getScrollY() == 0)
+                            swipe.setEnabled(true);
+                        else
+                            swipe.setEnabled(false);
+
+                    }
+                });
+    }
+
+    @Override
+    protected void onStop() {
+        swipe.getViewTreeObserver().removeOnScrollChangedListener(mOnScrollChangedListener);
+        super.onStop();
+    }
 }
