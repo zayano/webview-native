@@ -1,32 +1,55 @@
 package com.example.webviewodoo;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.http.SslError;
+import android.os.Build;
 import android.util.Log;
 import android.view.View;
 import android.webkit.CookieManager;
+import android.webkit.HttpAuthHandler;
+import android.webkit.SafeBrowsingResponse;
 import android.webkit.SslErrorHandler;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
+import androidx.annotation.RequiresApi;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-class MyWebClient extends WebViewClient{
+class MyWebClient extends WebViewClient {
+    private WebView webView;
     private ProgressBar progressBar;
-    private SwipeRefreshLayout swipe;
+    private SwipeRefreshLayout swipeRefreshLayout;
     private SharedPreferences shared;
     private SharedPreferences.Editor editor;
     private String cookies;
-    String session;
-    String loadUrl;
+    private CookieManager cookieManager;
+    private Context context;
 
-    public MyWebClient(ProgressBar bar, SwipeRefreshLayout swipe, SharedPreferences shared, SharedPreferences.Editor editor) {
+    public MyWebClient(
+            ProgressBar bar,
+            SharedPreferences shared,
+            SharedPreferences.Editor editor,
+            CookieManager cookieManager,
+            SwipeRefreshLayout swipeRefreshLayout,
+            Context context,
+            WebView webView
+    ) {
         this.progressBar = bar;
-        this.swipe = swipe;
         this.shared = shared;
         this.editor = editor;
+        this.cookieManager = cookieManager;
+        this.swipeRefreshLayout = swipeRefreshLayout;
+        this.context = context;
+        this.webView = webView;
     }
 
     @Override
@@ -39,18 +62,31 @@ class MyWebClient extends WebViewClient{
     public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);
         progressBar.setVisibility(View.GONE);
-        swipe.setRefreshing(false);
-        CookieManager cookieManager = CookieManager.getInstance();
-        cookieManager.setCookie(url, cookies);
+        swipeRefreshLayout.setRefreshing(false);
 
+        cookieManager.setAcceptCookie(true);
+        cookies = cookieManager.getCookie(url);
+    }
+
+    @SuppressLint("LongLogTag")
+    @Override
+    public void onReceivedHttpAuthRequest(WebView view, HttpAuthHandler handler, String host, String realm) {
+        super.onReceivedHttpAuthRequest(view, handler, host, realm);
+        Log.d("onReceivedHttpAuthRequest: ", "host : " + handler);
     }
 
     @Override
     public void onLoadResource(WebView view, String url) {
-        CookieManager cookieManager = CookieManager.getInstance();
-        cookies = cookieManager.getCookie(url);
-        Log.d("ONloadResource","cookie is " + cookies);
+        Log.d("onLoadResource", "cookie : " + cookieManager.getCookie(url));
+        Log.d("onLoadResource: ", "url : " + url);
         super.onLoadResource(view, url);
+    }
+
+    @Override
+    public void onSafeBrowsingHit(WebView view, WebResourceRequest request, int threatType, SafeBrowsingResponse callback) {
+        super.onSafeBrowsingHit(view, request, threatType, callback);
+        Log.d("onSafeBrowsingHit: ", "request :" + request);
+        Log.d("onSafeBrowsingHit: ", "safeBrowsingResponse :" + callback);
     }
 
 
@@ -64,4 +100,13 @@ class MyWebClient extends WebViewClient{
     public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
         handler.proceed();
     }
+
+    @RequiresApi(api = Build.VERSION_CODES.M)
+    @Override
+    public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+        super.onReceivedError(view, request, error);
+        Toast.makeText(context, "Your Internet Connection May not be active Or " + error.getDescription(), Toast.LENGTH_LONG).show();
+    }
+
+
 }
